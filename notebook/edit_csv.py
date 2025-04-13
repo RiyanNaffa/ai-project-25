@@ -42,7 +42,7 @@ for city in cities:
         
         # Set datetime as index for time series plots
         df_wide['datetimeUtc'] = pd.to_datetime(df_wide['datetimeUtc'])
-        df_wide.set_index('datetimeUtc', inplace=True)
+        df_wide.set_index('datetimeUtc', inplace=False)
         
         data_processed_dir = "../data_processed/"
         os.makedirs(data_processed_dir, exist_ok=True)

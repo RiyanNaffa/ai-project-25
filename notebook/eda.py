@@ -45,35 +45,15 @@ for city in cities:
         df_wide.set_index('datetimeUtc', inplace=True)
 
         # Plot all pollutant parameters over time
-        pollutant_cols = ['co', 'no', 'no2', 'nox', 'o3', 'uum003', 'pm1', 'pm10', 'pm25', 'so2']
+        pollutant_cols = ['pm25', 'pm10', 'o3', 'no2', 'so2', 'co']
         available_pollutants = [col for col in pollutant_cols if col in df_wide.columns]
-        
-        environment_cols = ['temperature', 'relativehumidity']
-        available_environment = [col for col in environment_cols if col in df_wide.columns]
-
-        # plt.figure(figsize=(14, 8))
-        # for col in available_pollutants + available_environment:
-        #     plt.plot(df_wide.index, df_wide[col], label=col)
-
-        # plt.title(f"Air Quality Parameters Over Time - {city}")
-        # plt.xlabel("Datetime (UTC)")
-        # plt.ylabel("Value")
-        # plt.legend()
-        # plt.tight_layout()
-        # plt.grid(True)
-        
-        # # Save the plot as an image file
-        # output_dir = "plots/"
-        # os.makedirs(output_dir, exist_ok=True)
-        # plt.savefig(os.path.join(output_dir, f"{city}_air_quality_plot.png"))
-        # plt.close()
 
         # Save individual plots
         output_dir = "plots/"
         os.makedirs(output_dir, exist_ok=True)
         
         # Combine all parameters you want to plot
-        all_cols = available_pollutants + available_environment
+        all_cols = available_pollutants
         n = len(all_cols)
 
         # Determine grid size for subplots (e.g., 2 columns)
@@ -84,7 +64,7 @@ for city in cities:
         axes = axes.flatten()
 
         for i, col in enumerate(all_cols):
-            axes[i].plot(df_wide.index, df_wide[col], color='tab:blue')
+            axes[i].scatter(df_wide.index, df_wide[col], color='tab:blue')
             axes[i].set_title(f"{col.upper()} Over Time - {city}")
             axes[i].set_xlabel("Datetime (UTC)")
             axes[i].set_ylabel(f"{col} value")
@@ -95,11 +75,11 @@ for city in cities:
             fig.delaxes(axes[j])
 
         fig.tight_layout()
-        collage_filename = os.path.join(output_dir, f"{city}_collage_plot.png")
+        collage_filename = os.path.join(output_dir, f"{city}_pollutants_plot.png")
         plt.savefig(collage_filename)
         plt.close()
 
-        print(f"Saved collage plot to: {collage_filename}")
+        print(f"Saved plot to: {collage_filename}")
 
     except Exception as e:
         print(f"Could not process file {city}.csv: {e}")
