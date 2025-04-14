@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from collections import Counter
 
 class Node():
     """*Class* untuk menyimpan informasi tentang *node* dalam *decision tree*.
@@ -28,7 +28,6 @@ class DecisionTreeClassifier():
     **Method**:
         `fit(self, X, y)`: Melakukan fitting model
         `predict(self, X)`: Memprediksi sebuah dataset
-        `make_prediction(self, x, tree)`: Melakukan prediksi hanya untuk sebuah data
         `print_tree(self, node=None, depth=0)`: Mencetak decision tree
     """
     def __init__(self, min_samples_split = 2, max_depth = 10):
@@ -60,7 +59,7 @@ class DecisionTreeClassifier():
         leaf_value = self.calculate_leaf_value(y)
         return Node(value = leaf_value)
     
-    def get_best_split(self, dataset, num_features):
+    def get_best_split(self, dataset, num_samples, num_features):
         """Mencari split terbaik dari suatu dataset.
 
         Args:
@@ -80,7 +79,7 @@ class DecisionTreeClassifier():
                 
                 if len(left_subtree) > 0 and len(right_subtree) > 0:
                     y = dataset[:, -1]
-                    curr_info_gain = self.information_gain(y, left_subtree[:, -1], right_subtree[:, -1], mode='gini')
+                    curr_info_gain = self.information_gain(y, left_subtree[:, -1], right_subtree[:, -1], mode='entropy')
                     
                     if curr_info_gain > max_info_gain:
                         max_info_gain = curr_info_gain
@@ -119,9 +118,9 @@ class DecisionTreeClassifier():
         weight_right = len(right_child) / len(parent)
         
         if mode == 'gini':
-            gain = self.gini(parent, left_child, right_child, weight_left, weight_right)
+            gain = self.gini_index(parent) - (weight_left * self.gini_index(left_child) + weight_right * self.gini_index(right_child))
         else:
-            gain = self.entropy(parent, left_child, right_child, weight_left, weight_right)
+            gain = self.entropy(parent) - (weight_left * self.entropy(left_child) + weight_right * self.entropy(right_child))
         
         return gain
     
@@ -210,7 +209,7 @@ class DecisionTreeClassifier():
         predictions = [self._predict(x, self.root) for x in X]
         return np.array(predictions)
     
-    def make_prediction(self, x, tree):
+    def _predict(self, x, tree):
         """Melakukan prediksi hanya untuk sebuah data.
 
         Args:
@@ -225,6 +224,63 @@ class DecisionTreeClassifier():
             return tree.value
         feature_val = x[tree.feature_index]
         if feature_val <= tree.threshold:
-            return self.make_prediction(x, tree.left)
+            return self._predict(x, tree.left)
         else:
-            return self.make_prediction(x, tree.right)
+            return self._predict(x, tree.right)
+        
+        
+df = pd.read_csv('../data_merged/merged_cleaned_data.csv')
+
+RANDOM_STATE = 42
+pollutant_cols = ['pm25', 'pm10', 'o3', 'no2', 'so2']
+
+df = df.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
+
+X = df[pollutant_cols].values
+y = df['aq'].values.reshape(-1, 1)
+
+def k_fold_split(X, y, k=5, random_state=42):
+    np.random.seed(random_state)
+    indices = np.arange(len(X))
+    np.random.shuffle(indices)
+    
+    fold_size = len(X) // k
+    folds = []
+
+    for i in range(k):
+        val_idx = indices[i * fold_size:(i + 1) * fold_size]
+        train_idx = np.concatenate([indices[:i * fold_size], indices[(i + 1) * fold_size:]])
+        folds.append((train_idx, val_idx))
+    
+    return folds
+
+# Apply k-fold cross-validation
+folds = k_fold_split(X, y, k=7, random_state=RANDOM_STATE)
+
+fold_accuracies = []
+
+for max_depth in range(5, 11):
+    print(f"\n===== MAX DEPTH = {max_depth} =====\n")
+    for i, (train_idx, val_idx) in enumerate(folds):
+        print(f"=== Fold {i + 1} ===")
+
+        X_train, y_train = X[train_idx], y[train_idx]
+        X_val, y_val = X[val_idx], y[val_idx]
+
+        model = DecisionTreeClassifier(max_depth=max_depth)
+        model.fit(X_train, y_train)
+
+        y_pred = model.predict(X_val)
+        acc = np.mean(y_pred == y_val)
+        fold_accuracies.append(acc)
+        
+        class_counts = Counter(y_val.flatten())
+        total = len(y_val)
+        
+        for label, count in class_counts.items():
+            print(f"Label {label}: {count} ({(count / total) * 100:.2f}%)")
+
+        print(f"Validation Acc.: {acc}")
+
+    # Report overall performance
+    print("\n=> Average Acc.:", np.mean(fold_accuracies))
