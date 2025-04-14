@@ -10,14 +10,18 @@ print(f"CSV files in {data_dir}: {files}\n")
 
 # Columns to drop
 columns_to_drop = ['location_id', 'location_name', 'datetimeUtc', 'latitude', 'longitude', 'relativehumidity', 'temperature']
-pollutant_cols = ['pm25', 'pm10', 'o3', 'no2', 'so2', 'co']
+pollutant_cols = ['pm25', 'pm10', 'o3', 'no2', 'so2']
+
+cities = ['Hanoi', 'London', 'Madrid', 'Napoli', 'Paris']
 
 # Initialize an empty DataFrame for merging with columns set to pollutant_cols
 df_merged = pd.DataFrame(columns=pollutant_cols)
 
 # Process each file
 for file in files:
-    try:
+    if file[:-14] not in cities:
+        continue
+    try:        
         file_path = os.path.join(data_dir, file)
         df_wide = pd.read_csv(file_path, parse_dates=['datetimeUtc'])
         
