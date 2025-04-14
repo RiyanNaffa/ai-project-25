@@ -11,13 +11,14 @@ data = {
 
 # Convert to DataFrame
 df = pd.DataFrame(data)
-
+print(df.head())
 
 # Shuffle the dataset
 df = df.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
 
 # Define train-test split ratio
-train_ratio = 0.8
+train_ratio = 0.85
+test_ratio = 0.15
 train_size = int(len(df) * train_ratio)
 
 # Split the dataset
