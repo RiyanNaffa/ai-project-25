@@ -1,6 +1,5 @@
 # AI Course 2024/2025 Mid-Term Project
 
-## Contributors:
-<a href="https://github.com/RiyanNaffa/ai-project-25/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=RiyanNaffa/ai-project-25" />
-</a>
+# Klasifikasi Kualitas Udara Kota-Kota Besar dengan Model *Decision Tree*
+
+*Decision tree* diputuskan menjadi model pilihan untuk klasifikasi karena fitur-fitur pada dataset tidak saling independen dan implementasinya lebih mudah dari model-model advanced lainnya.
